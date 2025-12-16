@@ -1,92 +1,66 @@
 const socket = io();
-const canvas = document.getElementById('drawingBoard');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-
-// Set canvas size
-canvas.width = 600;
-canvas.height = 500;
-
 let drawing = false;
-let color = '#000000';
-let room = null;
-let username = null;
 
-// --- LOGIN LOGIC ---
-function joinGame() {
-    const urlParams = new URLSearchParams(window.location.search);
-    room = urlParams.get('room') || 'default';
-    username = document.getElementById('username').value;
+// Handle different screen sizes
+function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-    if (!username) return alert("Please enter a name!");
+const urlParams = new URLSearchParams(window.location.search);
+const room = urlParams.get('room') || 'default';
+let username = prompt("Enter username:") || "Guest";
 
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'block';
+socket.emit('joinRoom', { room, username });
 
-    socket.emit('joinRoom', { room, username });
+// --- DRAWING LOGIC (Mouse + Touch) ---
+function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+    };
 }
 
-// --- DRAWING LOGIC ---
-canvas.addEventListener('mousedown', () => { drawing = true; });
-canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
-canvas.addEventListener('mousemove', draw);
+function startDrawing(e) {
+    drawing = true;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+}
 
 function draw(e) {
     if (!drawing) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Draw locally
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = document.getElementById('colorPicker').value;
-    
-    ctx.lineTo(x, y);
+    if (e.touches) e.preventDefault(); // Stop mobile from scrolling while drawing
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-
-    // Send to server
-    socket.emit('draw', { x, y, color: ctx.strokeStyle });
+    socket.emit('draw', { x: pos.x, y: pos.y, room });
 }
 
-// Receive drawing from others
+function stopDrawing() {
+    drawing = false;
+}
+
+// Mouse Events
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+
+// Touch Events (MOBILE)
+canvas.addEventListener('touchstart', (e) => { startDrawing(e); }, {passive: false});
+canvas.addEventListener('touchmove', (e) => { draw(e); }, {passive: false});
+canvas.addEventListener('touchend', stopDrawing);
+
 socket.on('draw', (data) => {
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = data.color;
-    
     ctx.lineTo(data.x, data.y);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(data.x, data.y);
 });
 
-// Clear Board
-function clearBoard() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    socket.emit('clearCanvas');
-}
-
-socket.on('clearCanvas', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
-
-// --- CHAT / GUESSING LOGIC ---
-const chatInput = document.getElementById('chatInput');
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        const msg = chatInput.value;
-        socket.emit('chatMessage', msg);
-        chatInput.value = '';
-    }
-});
-
-socket.on('chatMessage', (data) => {
-    const msgDiv = document.getElementById('messages');
-    const p = document.createElement('p');
-    p.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
-    msgDiv.appendChild(p);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-});
+// (Keep your chat and clear button code below this...)
