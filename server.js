@@ -6,7 +6,8 @@ const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 
 // --- CONFIGURATION ---
 const PORT = 3000; // The website will run at http://localhost:3000
-const TOKEN = 'YOUR_BOT_TOKEN_HERE'; // PASTE YOUR BOT TOKEN HERE
+const TOKEN = process.env.TOKEN;
+; // PASTE YOUR BOT TOKEN HERE
 
 // --- DISCORD BOT SETUP ---
 const bot = new Client({
