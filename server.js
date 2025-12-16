@@ -1,13 +1,12 @@
-// server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 
 // --- CONFIGURATION ---
-const PORT = 3000; // The website will run at http://localhost:3000
+// Render provides the PORT automatically, or defaults to 3000
+const PORT = process.env.PORT || 3000; 
 const TOKEN = process.env.TOKEN;
-; // PASTE YOUR BOT TOKEN HERE
 
 // --- DISCORD BOT SETUP ---
 const bot = new Client({
@@ -34,8 +33,8 @@ bot.on('messageCreate', async (message) => {
         const gameId = Math.random().toString(36).substring(7);
         activeGames.set(gameId, message.channel.id);
         
-        // In a real app, you'd use your public IP or domain instead of localhost
-        const gameLink = `http://localhost:${PORT}/?room=${gameId}`;
+        // --- UPDATED LINK FOR RENDER ---
+        const gameLink = `https://scribble-bot.onrender.com/?room=${gameId}`;
         
         const embed = new EmbedBuilder()
             .setTitle('🎨 Scribble Time!')
@@ -119,6 +118,6 @@ io.on('connection', (socket) => {
 
 // Start Server & Bot
 server.listen(PORT, () => {
-    console.log(`🌐 Web Server running on http://localhost:${PORT}`);
+    console.log(`🌐 Web Server running on port ${PORT}`);
     bot.login(TOKEN);
 });
