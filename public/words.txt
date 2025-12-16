@@ -1,0 +1,6 @@
+apple
+banana
+volcano
+spaceship
+pikachu
+hamburger
