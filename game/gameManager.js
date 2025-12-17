@@ -2,7 +2,8 @@ import crypto from "crypto";
 import { RULES } from "./constants.js";
 import { getRandomWord, maskWord } from "./wordManager.js";
 
-export function createGameManager(io) {
+// ✅ Now accepts codeManager as a second argument
+export function createGameManager(io, codeManager) {
   const games = new Map();
 
   function createGame({ channelId, drawerId }) {
@@ -22,9 +23,16 @@ export function createGameManager(io) {
     return games.get(id);
   }
 
-  function handleJoin(socket, { room, user }) {
+  function handleJoin(socket, { room, user, code }) { // ✅ Added code to arguments
     const g = games.get(room);
-    if (!g) return socket.emit("joinError", "Game expired");
+    if (!g) return socket.emit("joinError", "Game not found");
+
+    // ✅ VALIDATE THE CODE
+    const validation = codeManager.consumeCode(code, user.id);
+    if (!validation.ok) {
+      return socket.emit("joinError", validation.reason);
+    }
+
     if (g.players.size >= RULES.MAX_PLAYERS)
       return socket.emit("joinError", "Game full");
 
@@ -44,15 +52,14 @@ export function createGameManager(io) {
     io.to(room).emit("scores", Object.fromEntries(g.scores));
   }
 
+  // ... rest of file (handleChat, nextRound, etc.) remains same
   function handleChat(socket, msg) {
     const room = [...socket.rooms][1];
     const g = games.get(room);
     if (!g) return;
-
     g.lastActive.set(socket.id, Date.now());
     const p = g.players.get(socket.id);
     if (!p) return;
-
     if (p.id !== g.drawerId && msg.toLowerCase() === g.word) {
       g.scores.set(p.id, g.scores.get(p.id) + 10);
       io.to(room).emit("system", `🎉 ${p.name} guessed it!`);
@@ -65,6 +72,7 @@ export function createGameManager(io) {
 
   function nextRound(room) {
     const g = games.get(room);
+    if(!g) return;
     g.word = getRandomWord();
     g.revealed.clear();
     g.votes.clear();
@@ -78,8 +86,7 @@ export function createGameManager(io) {
       g.timeLeft--;
       io.to(room).emit("timer", g.timeLeft);
       if (g.timeLeft <= 0) nextRound(room);
-
-      if (!g.players.size) games.delete(room);
+      if (!g.players.size && g.timeLeft < -10) games.delete(room);
     }
   }, 1000);
 
