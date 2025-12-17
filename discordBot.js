@@ -1,8 +1,8 @@
 import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
-import { createCodeManager } from "./game/codeManager.js";
 import { RULES } from "./game/constants.js";
 
-export function startDiscordBot(gameManager) {
+// ✅ Now accepts codeManager as a second argument
+export function startDiscordBot(gameManager, codeManager) {
   const bot = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -11,8 +11,6 @@ export function startDiscordBot(gameManager) {
       GatewayIntentBits.GuildMessageReactions
     ]
   });
-
-  const codeManager = createCodeManager();
 
   bot.on("messageCreate", async msg => {
     if (!msg.content.startsWith("!start")) return;
@@ -30,7 +28,7 @@ export function startDiscordBot(gameManager) {
     const embed = new EmbedBuilder()
       .setTitle("🎨 Scribble Game")
       .setDescription(
-        `Drawer: **${random ? "Random" : mentioned.tag}**\n` +
+        `Drawer: **${random ? "Random" : (mentioned.tag || mentioned.username)}**\n` +
         `Max Players: ${RULES.MAX_PLAYERS}\n` +
         `Code Expires: 3 minutes\n\n` +
         `React ✏️ to get a join code`
@@ -52,7 +50,6 @@ export function startDiscordBot(gameManager) {
         return;
       }
 
-      // ✅ Convert milliseconds → seconds ONLY for Discord timestamp
       const unix = Math.floor(res.expiresAt / 1000);
 
       msg.channel.send(
