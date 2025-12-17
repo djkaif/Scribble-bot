@@ -23,10 +23,14 @@ let canDraw = false;
 let tool = "pen";
 let color = "#000000";
 
+// ✅ Updated for Responsive Layouts
 function resizeCanvas() {
   if (!canvas) return;
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  
+  // Settings must be reapplied after canvas width/height changes
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 }
@@ -52,7 +56,8 @@ socket.on("joinError", msg => { joinError.textContent = msg; });
 socket.on("init", data => {
   joinScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  resizeCanvas(); 
+  // Small delay ensures CSS has finished calculating sizes
+  setTimeout(resizeCanvas, 100); 
 });
 
 /* ROLE & GAME LOGIC */
@@ -151,4 +156,3 @@ chatInput.onkeydown = e => {
 document.getElementById("penBtn").onclick = () => { tool = "pen"; };
 document.getElementById("eraseBtn").onclick = () => { tool = "erase"; };
 document.getElementById("colorPicker").onchange = e => { color = e.target.value; };
-  
