@@ -1,141 +1,97 @@
+/* RESET */
 * {
   box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
 }
 
 body {
-  margin: 0;
-  background: #1e1f22;
-  color: #fff;
+  background-color: #1e1f22;
+  color: white;
   height: 100vh;
-  /* Fixed height to prevent the keyboard from breaking the layout */
-  height: -webkit-fill-available; 
-  overflow: hidden;
-}
-
-.screen {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100vw;
+  overflow: hidden;
 }
 
 .hidden { display: none !important; }
 
-/* TOP BAR */
-.top-bar {
-  padding: 10px;
+/* JOIN SCREEN */
+#join-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.card {
   background: #2b2d31;
+  padding: 2rem;
+  border-radius: 8px;
   text-align: center;
-  z-index: 10;
+  width: 90%;
+  max-width: 400px;
 }
 
-#wordHint {
-  font-size: 20px;
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 4px;
+  border: none;
+}
+
+button {
+  background: #5865f2;
+  color: white;
   font-weight: bold;
-  letter-spacing: 2px;
+  cursor: pointer;
 }
 
-/* MAIN AREA */
+/* GAME LAYOUT */
+.top-bar {
+  background: #2b2d31;
+  padding: 10px;
+  text-align: center;
+}
+
 .main {
   display: flex;
-  flex: 1; /* Takes up remaining vertical space */
-  width: 100%;
-  min-height: 0; /* Important for flex child scrolling */
+  flex: 1;
+  height: 0; /* Important for flex */
 }
 
 canvas {
   flex: 1;
   background: white;
   touch-action: none;
-  width: 100%;
-  height: 100%;
 }
 
 .side-panel {
-  width: 150px;
+  width: 200px;
   background: #2b2d31;
+  border-left: 1px solid #111;
   padding: 10px;
-  border-left: 2px solid #1e1f22;
-  overflow-y: auto;
 }
 
-/* CONTROLS (Toolbox) */
-.controls {
-  display: flex;
-  background: #2b2d31;
-  padding: 5px;
-  gap: 5px;
-  justify-content: center;
-  border-top: 1px solid #444;
-}
-
-.controls button, .controls input {
-  width: auto;
-  padding: 8px;
-  margin: 0;
-}
-
-/* CHAT AREA */
 .chat {
-  height: 180px; /* Bigger height for mobile readability */
+  height: 150px;
   background: #2b2d31;
-  border-top: 2px solid #1e1f22;
   display: flex;
   flex-direction: column;
+  border-top: 1px solid #111;
 }
 
 #messages {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
-  font-size: 14px;
+  padding: 10px;
 }
 
-#chatInput {
-  margin: 5px;
-  width: calc(100% - 10px);
-}
-
-/* 📱 MOBILE RESPONSIVE FIX 📱 */
+/* MOBILE OVERRIDE */
 @media (max-width: 768px) {
-  .main {
-    flex-direction: column; /* Stack canvas and side-panel vertically */
-  }
-
-  .side-panel {
-    width: 100%;
-    height: 80px; /* Short player list bar */
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-    border-left: none;
-    border-bottom: 2px solid #1e1f22;
-  }
-
-  .side-panel h3, .side-panel h4 { display: none; } /* Hide titles to save space */
-  
-  #players {
-    display: flex;
-    gap: 10px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    white-space: nowrap;
-  }
-
-  .chat {
-    height: 120px; /* Tighter chat for mobile */
-  }
-}
-
-/* OVERLAY */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  .main { flex-direction: column; }
+  .side-panel { width: 100%; height: 60px; display: flex; overflow-x: auto; }
+  .side-panel h3, .side-panel h4 { display: none; }
 }
