@@ -52,7 +52,9 @@ export function startDiscordBot(gameManager) {
         return;
       }
 
+      // ✅ Convert milliseconds → seconds ONLY for Discord timestamp
       const unix = Math.floor(res.expiresAt / 1000);
+
       msg.channel.send(
         `🎟 <@${user.id}>\n` +
         `Expires: <t:${unix}:R>\n\n` +
