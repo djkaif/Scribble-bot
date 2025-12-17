@@ -1,35 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Scribble</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="/socket.io/socket.io.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scribble</title>
+<link rel="stylesheet" href="style.css">
+<script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div id="login-screen">
-        <h1>Enter your name</h1>
-        <input type="text" id="username" placeholder="Username">
-        <button onclick="joinGame()">Join Game</button>
-    </div>
 
-    <div id="game-screen" style="display:none;">
-        <div class="container">
-            <div class="canvas-area">
-                <canvas id="drawingBoard"></canvas>
-                <div class="controls">
-                    <input type="color" id="colorPicker" value="#000000">
-                    <button onclick="clearBoard()">Clear</button>
-                </div>
-            </div>
-            <div class="chat-area">
-                <div id="messages"></div>
-                <input type="text" id="chatInput" placeholder="Type your guess here...">
-            </div>
-        </div>
-    </div>
+<div id="login">
+    <h2>Enter Code</h2>
+    <input id="code" placeholder="Game Code">
+    <button onclick="join()">Join</button>
+</div>
 
-    <script src="client.js"></script>
+<div id="game" hidden>
+    <canvas id="canvas"></canvas>
+    <div class="chat">
+        <div id="messages"></div>
+        <input id="chatInput" placeholder="Guess...">
+    </div>
+</div>
+
+<script src="client.js"></script>
 </body>
 </html>
