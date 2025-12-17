@@ -15,14 +15,18 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-// ✅ Capture the Render URL from Environment Variables
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const BASE_URL = process.env.BASE_URL || `https://scribble-bot.onrender.com`;
 
-app.use(express.static(path.join(__dirname, "public")));
+// ✅ Enhanced static serving to prevent CSS loading issues
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders: (res, path) => {
+    if (path.endsWith(".css")) {
+      res.setHeader("Content-Type", "text/css");
+    }
+  }
+}));
 
 const codeManager = createCodeManager();
-
-// ✅ Pass BASE_URL to the Game Manager
 const gameManager = createGameManager(io, codeManager, BASE_URL); 
 
 startDiscordBot(gameManager, codeManager);
@@ -38,6 +42,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Scribble Server running on port ${PORT}`);
-  console.log(`🔗 Base URL set to: ${BASE_URL}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
