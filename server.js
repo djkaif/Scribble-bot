@@ -1,3 +1,7 @@
+process.on("unhandledRejection", err => {
+    console.error("Unhandled rejection:", err);
+});
+
 const express = require("express");
 const http = require("http");
 const fs = require("fs");
