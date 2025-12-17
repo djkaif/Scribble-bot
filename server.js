@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import { createGameManager } from "./game/gameManager.js";
+import { createCodeManager } from "./game/codeManager.js"; // Import this
 import { startDiscordBot } from "./discordBot.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,8 +18,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const gameManager = createGameManager(io);
-startDiscordBot(gameManager);
+// ✅ Create ONE shared instance
+const codeManager = createCodeManager();
+const gameManager = createGameManager(io, codeManager); // Pass to Manager
+
+// ✅ Pass shared instance to Bot
+startDiscordBot(gameManager, codeManager);
 
 io.on("connection", socket => {
   socket.on("join", data => gameManager.handleJoin(socket, data));
