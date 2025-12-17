@@ -4,9 +4,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import { createGameManager } from "./game/gameManager.js";
-import { createCodeManager } from "./game/codeManager.js"; // Import this
+import { createCodeManager } from "./game/codeManager.js";
 import { startDiscordBot } from "./discordBot.js";
 
+// Setup __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -16,23 +17,44 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
+// Serve static files from the public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Create ONE shared instance
+// ✅ 1. Initialize Managers
+// createCodeManager handles the hex codes and Discord user names
 const codeManager = createCodeManager();
-const gameManager = createGameManager(io, codeManager); // Pass to Manager
 
-// ✅ Pass shared instance to Bot
+// createGameManager handles rooms, drawing, and scoring
+const gameManager = createGameManager(io, codeManager); 
+
+// ✅ 2. Start Discord Bot with shared managers
+// This allows the bot to store names in codeManager and create games in gameManager
 startDiscordBot(gameManager, codeManager);
 
-io.on("connection", socket => {
-  socket.on("join", data => gameManager.handleJoin(socket, data));
-  socket.on("draw", data => gameManager.handleDraw(socket, data));
-  socket.on("startPath", p => gameManager.handleStartPath(socket, p));
+// ✅ 3. Socket.io Event Handling
+io.on("connection", (socket) => {
+  console.log(`New connection: ${socket.id}`);
+
+  // Joining the room with the Hex Code
+  socket.on("join", (data) => gameManager.handleJoin(socket, data));
+
+  // Drawing Events
+  socket.on("startPath", (p) => gameManager.handleStartPath(socket, p));
+  socket.on("draw", (data) => gameManager.handleDraw(socket, data));
   socket.on("endPath", () => gameManager.handleEndPath(socket));
-  socket.on("chat", msg => gameManager.handleChat(socket, msg));
+
+  // Game Logic Events
+  socket.on("chat", (msg) => gameManager.handleChat(socket, msg));
   socket.on("voteSkip", () => gameManager.handleVoteSkip(socket));
-  socket.on("disconnect", () => gameManager.handleDisconnect(socket));
+
+  // Cleanup on leave
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+    gameManager.handleDisconnect(socket);
+  });
 });
 
-server.listen(PORT, () => console.log("Server running on", PORT));
+// ✅ 4. Start Server
+server.listen(PORT, () => {
+  console.log(`🚀 Scribble Server running on http://localhost:${PORT}`);
+});
