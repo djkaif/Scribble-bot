@@ -17,9 +17,7 @@ body {
   justify-content: center;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 /* JOIN */
 .card {
@@ -42,11 +40,6 @@ button {
   background: #5865f2;
   color: white;
   font-weight: bold;
-}
-
-.error {
-  color: #ff6b6b;
-  margin-top: 8px;
 }
 
 /* GAME */
@@ -85,7 +78,6 @@ canvas {
   width: 120px;
   background: #2b2d31;
   padding: 8px;
-  font-size: 14px;
 }
 
 .controls {
@@ -96,14 +88,40 @@ canvas {
 }
 
 .chat {
+  height: 160px;
   display: flex;
   flex-direction: column;
-  height: 160px;
 }
 
 #messages {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
-  font-size: 14px;
+}
+
+/* OVERLAY */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-card {
+  background: #2b2d31;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+}
+/* LEADERBOARD */
+.leaderboard {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #2b2d31;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 13px;
 }
