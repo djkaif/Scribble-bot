@@ -14,8 +14,6 @@ const wordHint = document.getElementById("wordHint");
 const timerFill = document.getElementById("timerFill");
 const chatMessages = document.getElementById("messages"); 
 const chatInput = document.getElementById("chatInput");
-const overlay = document.getElementById("roundOverlay");
-const overlayText = document.getElementById("roundText");
 
 /* STATE */
 let drawing = false;
@@ -23,61 +21,46 @@ let canDraw = false;
 let tool = "pen";
 let color = "#000000";
 
-// ✅ Updated for Responsive Layouts
 function resizeCanvas() {
-  if (!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  if (!canvas || gameScreen.classList.contains("hidden")) return;
   
-  // Settings must be reapplied after canvas width/height changes
+  // Use offsetWidth/Height for accurate layout sizing
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  ctx.lineWidth = 4;
 }
+
 window.addEventListener("resize", resizeCanvas);
 
 /* JOIN LOGIC */
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('room');
 
-if (joinBtn) {
-    joinBtn.onclick = () => {
-        const code = codeInput.value.trim();
-        if (!code || !roomId) {
-            joinError.textContent = "Missing Code or Room ID!";
-            return;
-        }
-        socket.emit("join", { room: roomId, code: code });
-    };
-}
-
-socket.on("joinError", msg => { joinError.textContent = msg; });
+joinBtn.onclick = () => {
+  const code = codeInput.value.trim();
+  if (code && roomId) {
+    socket.emit("join", { room: roomId, code: code });
+  } else {
+    joinError.textContent = "Enter code!";
+  }
+};
 
 socket.on("init", data => {
   joinScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  // Small delay ensures CSS has finished calculating sizes
+  // Wait for CSS to apply before sizing canvas
   setTimeout(resizeCanvas, 100); 
 });
 
-/* ROLE & GAME LOGIC */
+/* GAMEPLAY */
 socket.on("roleUpdate", data => {
   canDraw = data.isDrawer;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (canDraw) {
-    wordHint.style.color = "#57f287"; 
-    overlayText.textContent = "✏️ YOUR TURN TO DRAW!";
-    chatInput.disabled = true;
-    chatInput.placeholder = "You are drawing... no spoilers!";
-  } else {
-    wordHint.style.color = "#fff";
-    overlayText.textContent = "🔍 GET READY TO GUESS!";
-    chatInput.disabled = false;
-    chatInput.placeholder = "Type your guess...";
-  }
-  overlay.classList.remove("hidden");
-  setTimeout(() => overlay.classList.add("hidden"), 2000);
+  chatInput.disabled = canDraw;
+  chatInput.placeholder = canDraw ? "You are drawing..." : "Type your guess...";
 });
 
 socket.on("hint", h => { wordHint.textContent = h; });
@@ -87,30 +70,14 @@ socket.on("players", list => {
   playersList.innerHTML = list.map(p => `<li>${p.name}</li>`).join("");
 });
 
-socket.on("scores", scores => {
-  scoresBox.innerHTML = Object.entries(scores)
-    .map(([id, score]) => `<div>${score} pts</div>`).join("");
-});
-
 socket.on("chat", data => {
   const div = document.createElement("div");
-  div.style.padding = "4px 0";
-  div.innerHTML = `<span style="color: #5865f2"><strong>${data.user}:</strong></span> ${data.text}`;
+  div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-socket.on("system", msg => {
-  overlayText.textContent = msg;
-  overlay.classList.remove("hidden");
-  setTimeout(() => overlay.classList.add("hidden"), 3000);
-});
-
-socket.on("round", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
-
-/* DRAWING */
+/* DRAWING LOGIC */
 canvas.onpointerdown = e => {
   if (!canDraw) return;
   drawing = true;
@@ -122,28 +89,22 @@ canvas.onpointerdown = e => {
 canvas.onpointermove = e => {
   if (!drawing || !canDraw) return;
   ctx.strokeStyle = tool === "erase" ? "#ffffff" : color;
-  ctx.lineWidth = tool === "erase" ? 20 : 4;
+  ctx.lineWidth = tool === "erase" ? 25 : 4;
   ctx.lineTo(e.offsetX, e.offsetY);
   ctx.stroke();
   socket.emit("draw", { x: e.offsetX, y: e.offsetY });
 };
 
-canvas.onpointerup = () => {
-  drawing = false;
-  socket.emit("endPath");
-};
+canvas.onpointerup = () => { drawing = false; socket.emit("endPath"); };
 
 socket.on("startPath", p => {
-  ctx.strokeStyle = p.tool === "erase" ? "#ffffff" : p.color;
-  ctx.lineWidth = p.tool === "erase" ? 20 : 4;
   ctx.beginPath();
+  ctx.strokeStyle = p.tool === "erase" ? "#ffffff" : p.color;
+  ctx.lineWidth = p.tool === "erase" ? 25 : 4;
   ctx.moveTo(p.x, p.y);
 });
 
-socket.on("draw", p => {
-  ctx.lineTo(p.x, p.y);
-  ctx.stroke();
-});
+socket.on("draw", p => { ctx.lineTo(p.x, p.y); ctx.stroke(); });
 
 /* CONTROLS */
 chatInput.onkeydown = e => {
