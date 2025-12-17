@@ -1,64 +1,55 @@
-import { Client, GatewayIntentBits, EmbedBuilder } from "discord.js";
+import { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, Routes } from "discord.js";
+import { REST } from "@discordjs/rest";
 import { RULES } from "./game/constants.js";
 
-// ✅ Now accepts codeManager as a second argument
 export function startDiscordBot(gameManager, codeManager) {
-  const bot = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildMessageReactions
-    ]
+  const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+  // ✅ Register Slash Command
+  const commands = [
+    new SlashCommandBuilder()
+      .setName("start")
+      .setDescription("Start a new Scribble game")
+      .addUserOption(opt => opt.setName("drawer").setDescription("The person drawing (optional)"))
+  ].map(cmd => cmd.toJSON());
+
+  bot.once("ready", async () => {
+    const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+    try {
+      await rest.put(Routes.applicationCommands(bot.user.id), { body: commands });
+      console.log("Slash commands registered.");
+    } catch (e) { console.error(e); }
   });
 
-  bot.on("messageCreate", async msg => {
-    if (!msg.content.startsWith("!start")) return;
+  bot.on("interactionCreate", async interaction => {
+    if (!interaction.isChatInputCommand()) return;
 
-    const random = msg.content.startsWith("!start.ran");
-    const mentioned = msg.mentions.users.first();
-    if (!random && !mentioned)
-      return msg.reply("Use `!start @user` or `!start.ran`");
+    if (interaction.commandName === "start") {
+      const drawer = interaction.options.getUser("drawer");
+      
+      const game = gameManager.createGame({
+        channelId: interaction.channelId,
+        drawerId: drawer ? drawer.id : null
+      });
 
-    const game = gameManager.createGame({
-      channelId: msg.channel.id,
-      drawerId: random ? null : mentioned.id
-    });
-
-    const embed = new EmbedBuilder()
-      .setTitle("🎨 Scribble Game")
-      .setDescription(
-        `Drawer: **${random ? "Random" : (mentioned.tag || mentioned.username)}**\n` +
-        `Max Players: ${RULES.MAX_PLAYERS}\n` +
-        `Code Expires: 3 minutes\n\n` +
-        `React ✏️ to get a join code`
-      )
-      .setColor(0x5865f2);
-
-    const m = await msg.channel.send({ embeds: [embed] });
-    await m.react("✏️");
-
-    const collector = m.createReactionCollector({
-      filter: (r, u) => r.emoji.name === "✏️" && !u.bot
-    });
-
-    collector.on("collect", (_, user) => {
-      const res = codeManager.issueCode(user.id, game.id);
-      if (!res.ok) {
-        msg.channel.send(`<@${user.id}> ${res.reason}`)
-          .then(m => setTimeout(() => m.delete(), 5000));
-        return;
-      }
+      // ✅ Generate the join code for the user who ran the command
+      const displayName = interaction.user.globalName || interaction.user.username;
+      const res = codeManager.issueCode(interaction.user.id, game.id, displayName);
 
       const unix = Math.floor(res.expiresAt / 1000);
 
-      msg.channel.send(
-        `🎟 <@${user.id}>\n` +
-        `Expires: <t:${unix}:R>\n\n` +
-        `\`\`\`${res.code}\`\`\`\n` +
-        `${gameManager.baseUrl}/?room=${game.id}`
-      ).then(m => setTimeout(() => m.delete(), 30000));
-    });
+      const embed = new EmbedBuilder()
+        .setTitle("🎨 Scribble Game Started")
+        .setDescription(`Drawer: **${drawer ? drawer.tag : "Random"}**\nJoin using the code below!`)
+        .setColor(0x5865f2);
+
+      // ✅ Respond with Ephemeral message (Private)
+      await interaction.reply({
+        content: `🎟 **Your Private Join Link**\nCode: \`${res.code}\`\nExpires: <t:${unix}:R>\n${gameManager.baseUrl}/?room=${game.id}`,
+        embeds: [embed],
+        ephemeral: true
+      });
+    }
   });
 
   bot.login(process.env.TOKEN);
