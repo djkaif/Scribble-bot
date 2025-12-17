@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <title>Scribble</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="/style.css" />
+  
+  <link rel="stylesheet" type="text/css" href="/style.css" />
+  
   <script src="/socket.io/socket.io.js"></script>
 </head>
 
@@ -12,40 +14,29 @@
 
 <div id="join-screen" class="screen">
   <h1>🎨 Scribble</h1>
-
   <div class="card">
     <input id="codeInput" placeholder="Enter join code" />
     <button id="joinBtn">Join Game</button>
-
-    <p class="hint">
-      Get your code from Discord by reacting ✏️
-    </p>
-
+    <p class="hint">Get your code from Discord by reacting ✏️</p>
     <p id="joinError" class="error"></p>
   </div>
 </div>
 
 <div id="game-screen" class="screen hidden">
-
   <div class="top-bar">
     <div id="wordHint">Waiting…</div>
-    <div id="timerBar">
-      <div id="timerFill"></div>
-    </div>
+    <div id="timerBar"><div id="timerFill"></div></div>
   </div>
 
   <div class="main">
     <canvas id="canvas"></canvas>
-
     <div class="side-panel">
       <h3>Players</h3>
       <ul id="players"></ul>
-
       <div class="leaderboard">
         <h4>Scores</h4>
         <div id="scores"></div>
       </div>
-
       <button id="voteSkip">⏭ Vote Skip</button>
     </div>
   </div>
@@ -63,11 +54,8 @@
   </div>
 
   <div id="roundOverlay" class="overlay hidden">
-    <div class="overlay-card">
-      <h2 id="roundText"></h2>
-    </div>
+    <div class="overlay-card"><h2 id="roundText"></h2></div>
   </div>
-
 </div>
 
 <script src="/app.js"></script>
