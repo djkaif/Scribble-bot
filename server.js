@@ -15,11 +15,15 @@ const HINT_INTERVAL = 30;
 const JOIN_COOLDOWN = 60_000;
 
 function getRandomWord() {
-    return fs.readFileSync("words.txt", "utf8")
+    const words = fs
+        .readFileSync("words.txt", "utf8")
         .split(/\r?\n/)
-        .filter(Boolean)
-        [Math.floor(Math.random() * 50)]
-        .toLowerCase();
+        .map(w => w.trim())
+        .filter(w => w.length > 0);
+
+    if (words.length === 0) return "apple";
+
+    return words[Math.floor(Math.random() * words.length)].toLowerCase();
 }
 
 function generateCode() {
