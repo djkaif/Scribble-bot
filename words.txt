@@ -4,3 +4,6 @@ volcano
 spaceship
 pikachu
 hamburger
+tree
+human
+robot
