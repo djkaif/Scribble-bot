@@ -8,27 +8,35 @@ body {
   background: #1e1f22;
   color: #fff;
   height: 100vh;
+  overflow: hidden; /* Prevents scrolling */
 }
 
 /* GENERAL */
 .screen {
   display: flex;
   flex-direction: column;
+  height: 100vh; /* Full screen height */
+  width: 100vw;
+}
+
+/* ✅ CRITICAL FIX: Ensure hidden always works */
+.hidden {
+  display: none !important;
+}
+
+/* JOIN SCREEN */
+#join-screen {
   align-items: center;
   justify-content: center;
 }
 
-.hidden {
-  display: none;
-}
-
-/* JOIN */
 .card {
   background: #2b2d31;
   padding: 20px;
   border-radius: 12px;
   width: 90%;
   max-width: 320px;
+  text-align: center;
 }
 
 input, button {
@@ -37,23 +45,31 @@ input, button {
   margin-top: 10px;
   border-radius: 8px;
   border: none;
+  outline: none;
 }
 
 button {
   background: #5865f2;
   color: white;
   font-weight: bold;
+  cursor: pointer;
 }
 
-.error {
-  color: #ff6b6b;
-}
+button:hover { background: #4752c4; }
 
-/* GAME */
+/* GAME LAYOUT */
 .top-bar {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   background: #2b2d31;
+  text-align: center;
+}
+
+#wordHint {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 5px;
 }
 
 #timerBar {
@@ -67,45 +83,35 @@ button {
   height: 100%;
   background: #57f287;
   width: 100%;
+  transition: width 1s linear;
 }
 
 .main {
   display: flex;
   flex: 1;
   width: 100%;
+  overflow: hidden;
 }
 
 canvas {
   flex: 1;
   background: white;
   touch-action: none;
+  cursor: crosshair;
 }
 
 .side-panel {
-  width: 130px;
+  width: 150px;
   background: #2b2d31;
-  padding: 8px;
-  font-size: 14px;
-}
-
-.leaderboard {
-  background: #1e1f22;
-  padding: 6px;
-  border-radius: 8px;
-  margin: 8px 0;
-}
-
-/* CONTROLS */
-.controls {
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: #2b2d31;
+  padding: 10px;
+  border-left: 2px solid #1e1f22;
 }
 
 /* CHAT */
 .chat {
-  height: 160px;
+  height: 150px;
+  background: #2b2d31;
+  border-top: 2px solid #1e1f22;
   display: flex;
   flex-direction: column;
 }
@@ -113,22 +119,17 @@ canvas {
 #messages {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 10px;
+  font-size: 14px;
 }
 
 /* OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.7);
+  background: rgba(0,0,0,0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.overlay-card {
-  background: #2b2d31;
-  padding: 30px;
-  border-radius: 16px;
-  text-align: center;
+  z-index: 1000; /* Sit on top of everything */
 }
