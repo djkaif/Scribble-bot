@@ -10,16 +10,20 @@
 <body>
 
 <div id="login">
-    <h2>Enter Code</h2>
-    <input id="code" placeholder="Game Code">
+    <input id="code" placeholder="Enter Code">
     <button onclick="join()">Join</button>
 </div>
 
 <div id="game" hidden>
-    <canvas id="canvas"></canvas>
-    <div class="chat">
-        <div id="messages"></div>
-        <input id="chatInput" placeholder="Guess...">
+    <div id="timer"><div id="bar"></div></div>
+    <div class="main">
+        <canvas id="canvas"></canvas>
+        <div class="side">
+            <div id="players"></div>
+            <button id="skip" onclick="voteSkip()">Vote Skip</button>
+            <div id="chat"></div>
+            <input id="msg" placeholder="Guess...">
+        </div>
     </div>
 </div>
 
