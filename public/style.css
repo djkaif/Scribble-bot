@@ -10,6 +10,7 @@ body {
   height: 100vh;
 }
 
+/* GENERAL */
 .screen {
   display: flex;
   flex-direction: column;
@@ -17,7 +18,9 @@ body {
   justify-content: center;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 /* JOIN */
 .card {
@@ -40,6 +43,10 @@ button {
   background: #5865f2;
   color: white;
   font-weight: bold;
+}
+
+.error {
+  color: #ff6b6b;
 }
 
 /* GAME */
@@ -75,11 +82,20 @@ canvas {
 }
 
 .side-panel {
-  width: 120px;
+  width: 130px;
   background: #2b2d31;
   padding: 8px;
+  font-size: 14px;
 }
 
+.leaderboard {
+  background: #1e1f22;
+  padding: 6px;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+/* CONTROLS */
 .controls {
   display: flex;
   gap: 8px;
@@ -87,6 +103,7 @@ canvas {
   background: #2b2d31;
 }
 
+/* CHAT */
 .chat {
   height: 160px;
   display: flex;
@@ -114,14 +131,4 @@ canvas {
   padding: 30px;
   border-radius: 16px;
   text-align: center;
-}
-/* LEADERBOARD */
-.leaderboard {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #2b2d31;
-  padding: 8px;
-  border-radius: 10px;
-  font-size: 13px;
 }
