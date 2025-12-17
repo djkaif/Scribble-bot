@@ -4,30 +4,38 @@
   <meta charset="UTF-8" />
   <title>Scribble</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="style.css" />
   <script src="/socket.io/socket.io.js"></script>
 </head>
 
 <body>
 
-<!-- JOIN -->
+<!-- JOIN SCREEN -->
 <div id="join-screen" class="screen">
   <h1>🎨 Scribble</h1>
+
   <div class="card">
     <input id="codeInput" placeholder="Enter join code" />
     <button id="joinBtn">Join Game</button>
-    <p class="hint">Get your code from Discord by reacting ✏️</p>
+
+    <p class="hint">
+      Get your code from Discord by reacting ✏️
+    </p>
+
     <p id="joinError" class="error"></p>
   </div>
 </div>
 
-<!-- GAME -->
+<!-- GAME SCREEN -->
 <div id="game-screen" class="screen hidden">
 
-  <!-- TOP -->
+  <!-- TOP BAR -->
   <div class="top-bar">
     <div id="wordHint">Waiting…</div>
-    <div id="timerBar"><div id="timerFill"></div></div>
+    <div id="timerBar">
+      <div id="timerFill"></div>
+    </div>
   </div>
 
   <!-- MAIN -->
@@ -37,16 +45,22 @@
     <div class="side-panel">
       <h3>Players</h3>
       <ul id="players"></ul>
+
+      <div class="leaderboard">
+        <h4>Scores</h4>
+        <div id="scores"></div>
+      </div>
+
       <button id="voteSkip">⏭ Vote Skip</button>
     </div>
   </div>
 
-  <!-- TOOLS -->
+  <!-- CONTROLS -->
   <div class="controls">
     <input type="color" id="colorPicker" />
     <button id="penBtn">✏️</button>
     <button id="eraseBtn">🧽</button>
-    <button id="undoBtn">↩ Undo (5)</button>
+    <button id="undoBtn">↩ Undo</button>
   </div>
 
   <!-- CHAT -->
