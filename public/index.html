@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Scribble</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
   <link rel="stylesheet" href="style.css" />
   <script src="/socket.io/socket.io.js"></script>
@@ -11,7 +11,6 @@
 
 <body>
 
-<!-- JOIN SCREEN -->
 <div id="join-screen" class="screen">
   <h1>🎨 Scribble</h1>
 
@@ -27,10 +26,8 @@
   </div>
 </div>
 
-<!-- GAME SCREEN -->
 <div id="game-screen" class="screen hidden">
 
-  <!-- TOP BAR -->
   <div class="top-bar">
     <div id="wordHint">Waiting…</div>
     <div id="timerBar">
@@ -38,7 +35,6 @@
     </div>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
     <canvas id="canvas"></canvas>
 
@@ -55,7 +51,6 @@
     </div>
   </div>
 
-  <!-- CONTROLS -->
   <div class="controls">
     <input type="color" id="colorPicker" />
     <button id="penBtn">✏️</button>
@@ -63,13 +58,11 @@
     <button id="undoBtn">↩ Undo</button>
   </div>
 
-  <!-- CHAT -->
   <div class="chat">
     <div id="messages"></div>
     <input id="chatInput" placeholder="Type your guess…" />
   </div>
 
-  <!-- ROUND OVERLAY -->
   <div id="roundOverlay" class="overlay hidden">
     <div class="overlay-card">
       <h2 id="roundText"></h2>
