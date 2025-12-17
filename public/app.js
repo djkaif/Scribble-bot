@@ -46,16 +46,25 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-/* JOIN */
+/* JOIN LOGIC - FIXED */
+const urlParams = new URLSearchParams(window.location.search);
+const roomId = urlParams.get('room');
+
 joinBtn.onclick = () => {
   const code = codeInput.value.trim();
   if (!code) return;
+  
+  if (!roomId) {
+    joinError.textContent = "❌ No room specified in URL";
+    return;
+  }
 
   socket.emit("join", {
-    code,
+    room: roomId, // ✅ Now sending the room ID from the URL
+    code: code,   // ✅ Sending the hex code
     user: {
-      id: Math.random().toString(36),
-      name: "discord display (@discord)"
+      id: "u" + Math.random().toString(36).substr(2, 9),
+      name: "Player_" + Math.floor(Math.random() * 900 + 100)
     }
   });
 };
@@ -69,6 +78,7 @@ socket.on("init", data => {
   gameScreen.classList.remove("hidden");
   canDraw = data.drawer;
   sounds.join.play();
+  resizeCanvas(); // Ensure canvas is sized correctly once visible
 });
 
 /* DRAWING */
@@ -113,6 +123,10 @@ socket.on("draw", p => {
   ctx.stroke();
 });
 
+socket.on("endPath", () => {
+  ctx.closePath();
+});
+
 /* GAME EVENTS */
 socket.on("players", list => {
   playersList.innerHTML = "";
@@ -125,8 +139,8 @@ socket.on("players", list => {
 
 socket.on("scores", scores => {
   scoresBox.innerHTML = "";
-  Object.values(scores).forEach(s => {
-    scoresBox.innerHTML += `${s}<br>`;
+  Object.entries(scores).forEach(([id, score]) => {
+    scoresBox.innerHTML += `Player: ${score}pts<br>`;
   });
 });
 
