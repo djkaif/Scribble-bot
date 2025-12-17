@@ -46,7 +46,6 @@ export function createCodeManager() {
         return { ok: false, reason: "❌ Code expired" };
       }
 
-      if (entry.userId !== userId) return { ok: false, reason: "User mismatch" };
       if (entry.used) return { ok: false, reason: "Code already used" };
 
       entry.used = true;
