@@ -2,7 +2,6 @@ apple
 banana
 volcano
 spaceship
-pikachu
 hamburger
 tree
 human
