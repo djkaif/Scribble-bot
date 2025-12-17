@@ -1,0 +1,7 @@
+export const RULES = {
+  MAX_PLAYERS: 8,
+  CODE_EXPIRY_MS: 180_000,
+  UNDO_LIMIT: 5,
+  ROUND_TIME: 90,
+  HINT_INTERVAL: 30
+};
