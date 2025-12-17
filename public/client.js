@@ -1,66 +1,62 @@
 const socket = io();
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let canDraw = false;
 let drawing = false;
 
-// Handle different screen sizes
-function resizeCanvas() {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+canvas.width = window.innerWidth * 0.7;
+canvas.height = window.innerHeight;
+
+function join() {
+    const params = new URLSearchParams(location.search);
+    socket.emit("join", {
+        room: params.get("room"),
+        code: document.getElementById("code").value
+    });
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
-const urlParams = new URLSearchParams(window.location.search);
-const room = urlParams.get('room') || 'default';
-let username = prompt("Enter username:") || "Guest";
+socket.on("role", data => {
+    document.getElementById("login").hidden = true;
+    document.getElementById("game").hidden = false;
+    canDraw = data.drawer;
+});
 
-socket.emit('joinRoom', { room, username });
-
-// --- DRAWING LOGIC (Mouse + Touch) ---
-function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+function pos(e) {
+    const r = canvas.getBoundingClientRect();
     return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
+        x: e.clientX - r.left,
+        y: e.clientY - r.top
     };
 }
 
-function startDrawing(e) {
+canvas.onmousedown = e => {
+    if (!canDraw) return;
     drawing = true;
-    const pos = getPos(e);
+    const p = pos(e);
     ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-}
+    ctx.moveTo(p.x, p.y);
+    socket.emit("startPath", p);
+};
 
-function draw(e) {
+canvas.onmousemove = e => {
     if (!drawing) return;
-    if (e.touches) e.preventDefault(); // Stop mobile from scrolling while drawing
-    const pos = getPos(e);
-    ctx.lineTo(pos.x, pos.y);
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
     ctx.stroke();
-    socket.emit('draw', { x: pos.x, y: pos.y, room });
-}
+    socket.emit("draw", p);
+};
 
-function stopDrawing() {
+canvas.onmouseup = () => {
     drawing = false;
-}
+    socket.emit("endPath");
+};
 
-// Mouse Events
-canvas.addEventListener('mousedown', startDrawing);
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', stopDrawing);
-
-// Touch Events (MOBILE)
-canvas.addEventListener('touchstart', (e) => { startDrawing(e); }, {passive: false});
-canvas.addEventListener('touchmove', (e) => { draw(e); }, {passive: false});
-canvas.addEventListener('touchend', stopDrawing);
-
-socket.on('draw', (data) => {
-    ctx.lineTo(data.x, data.y);
+socket.on("startPath", p => {
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+});
+socket.on("draw", p => {
+    ctx.lineTo(p.x, p.y);
     ctx.stroke();
 });
-
-// (Keep your chat and clear button code below this...)
