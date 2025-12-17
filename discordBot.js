@@ -2,16 +2,19 @@ import { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, Routes, M
 import { REST } from "@discordjs/rest";
 
 export function startDiscordBot(gameManager, codeManager) {
-  const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
+  const bot = new Client({ 
+    intents: [
+      GatewayIntentBits.Guilds, 
+      GatewayIntentBits.GuildMessages, 
+      GatewayIntentBits.GuildMessageReactions // ✅ Needed to detect reactions
+    ] 
+  });
 
   const commands = [
     new SlashCommandBuilder()
       .setName("start")
-      .setDescription("Create a new Scribble game")
-      .addUserOption(opt => 
-        opt.setName("drawer")
-           .setDescription("Select who draws first (optional)")
-      )
+      .setDescription("Start a Scribble game that others can join")
+      .addUserOption(opt => opt.setName("drawer").setDescription("The first drawer (optional)"))
   ].map(cmd => cmd.toJSON());
 
   bot.once("ready", async () => {
@@ -19,57 +22,74 @@ export function startDiscordBot(gameManager, codeManager) {
     try {
       await rest.put(Routes.applicationCommands(bot.user.id), { body: commands });
       console.log("✅ Slash commands registered");
-    } catch (e) { 
-      console.error("Error registering commands:", e); 
-    }
+    } catch (e) { console.error(e); }
   });
 
   bot.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === "start") {
-      // ✅ 1. Immediately defer the reply. This stops the "Unknown Interaction" error.
-      // We set it to Ephemeral so the "Bot is thinking..." is also private.
-      await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+      // ✅ 1. Public Defer (Everyone can see this message)
+      await interaction.deferReply(); 
 
       try {
         const drawer = interaction.options.getUser("drawer");
-        
-        // 2. Run your game logic
         const game = gameManager.createGame({
           channelId: interaction.channelId,
           drawerId: drawer ? drawer.id : null
         });
 
-        const displayName = interaction.user.globalName || interaction.user.username;
-        const res = codeManager.issueCode(interaction.user.id, game.id, displayName);
-
-        if (!res.ok) {
-          return interaction.editReply({ content: res.reason });
-        }
-
-        const unix = Math.floor(res.expiresAt / 1000);
-
         const embed = new EmbedBuilder()
-          .setTitle("🎨 Scribble Room Created")
+          .setTitle("🎨 Scribble Room Ready!")
           .setDescription(
-            `Channel: <#${interaction.channelId}>\n` +
-            `Drawer: **${drawer ? drawer.username : "Random"}**\n\n` +
-            `Click the link and enter your code on the website.`
+            `**Host:** ${interaction.user.username}\n` +
+            `**Drawer:** ${drawer ? drawer.username : "Random"}\n\n` +
+            `1️⃣ **[Click Here to Open Game](${gameManager.baseUrl}/?room=${game.id})**\n` +
+            `2️⃣ React with ✏️ to get your **Private Join Code** via DM.`
           )
+          .setFooter({ text: "Codes expire in 3 minutes" })
           .setColor(0x5865f2);
 
-        // ✅ 3. Use editReply instead of reply because we deferred.
-        await interaction.editReply({
-          content: `🎟 **PRIVATE ACCESS**\n` +
-                   `Code: \`${res.code}\`\n` +
-                   `Expires: <t:${unix}:R>\n` +
-                   `Link: ${gameManager.baseUrl}/?room=${game.id}`,
-          embeds: [embed]
+        // ✅ 2. Send the public message and get the message object
+        const message = await interaction.editReply({
+          embeds: [embed],
+          fetchReply: true 
         });
+
+        // ✅ 3. Add the reaction emoji
+        await message.react("✏️");
+
+        // ✅ 4. Create a collector for the ✏️ emoji
+        const collector = message.createReactionCollector({
+          filter: (r, u) => r.emoji.name === "✏️" && !u.bot,
+          time: 600000 // 10 minutes
+        });
+
+        collector.on("collect", async (reaction, user) => {
+          const displayName = user.globalName || user.username;
+          const res = codeManager.issueCode(user.id, game.id, displayName);
+
+          if (!res.ok) {
+            // If they are on cooldown, tell them privately
+            return user.send(`❌ **Error:** ${res.reason}`).catch(() => null);
+          }
+
+          // ✅ 5. Send the code PRIVATELY to the person who reacted
+          try {
+            await user.send(
+              `🎟 **Your Scribble Join Code:** \`${res.code}\`\n` +
+              `Enter this code on the website to join the room!`
+            );
+          } catch (err) {
+            // If their DMs are closed, mention them in the channel briefly
+            interaction.channel.send(`⚠️ <@${user.id}>, I couldn't DM you your code! Please open your DMs.`)
+              .then(m => setTimeout(() => m.delete(), 5000));
+          }
+        });
+
       } catch (error) {
-        console.error("Error processing /start:", error);
-        await interaction.editReply({ content: "There was an error starting the game." });
+        console.error(error);
+        await interaction.editReply({ content: "Error starting game." });
       }
     }
   });
