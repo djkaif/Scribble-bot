@@ -4,23 +4,21 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import { createGameManager } from "./game/gameManager.js";
-import { startDiscordBot } from "./discordBot.js"; // Added to link bot
+import { startDiscordBot } from "./discordBot.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-const gameManager = createGameManager(io);
-
-// Start the Discord Bot
-startDiscordBot(gameManager);
-
 app.use(express.static(path.join(__dirname, "public")));
+
+const gameManager = createGameManager(io);
+startDiscordBot(gameManager);
 
 io.on("connection", socket => {
   socket.on("join", data => gameManager.handleJoin(socket, data));
