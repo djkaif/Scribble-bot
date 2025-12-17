@@ -1,96 +1,82 @@
-import { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, Routes, MessageFlags } from "discord.js";
+import { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, Routes } from "discord.js";
 import { REST } from "@discordjs/rest";
+
+// ✅ Interface to allow gameManager to talk to Discord
+export const discordInterface = {
+  send: () => {} 
+};
 
 export function startDiscordBot(gameManager, codeManager) {
   const bot = new Client({ 
     intents: [
       GatewayIntentBits.Guilds, 
       GatewayIntentBits.GuildMessages, 
-      GatewayIntentBits.GuildMessageReactions // ✅ Needed to detect reactions
+      GatewayIntentBits.GuildMessageReactions 
     ] 
   });
 
   const commands = [
     new SlashCommandBuilder()
       .setName("start")
-      .setDescription("Start a Scribble game that others can join")
-      .addUserOption(opt => opt.setName("drawer").setDescription("The first drawer (optional)"))
+      .setDescription("Start a Scribble game")
+      .addUserOption(opt => opt.setName("drawer").setDescription("The first drawer")),
+    new SlashCommandBuilder()
+      .setName("leaderboard")
+      .setDescription("View the current scores for the game in this channel")
   ].map(cmd => cmd.toJSON());
 
-  bot.once("ready", async () => {
+  bot.once("clientReady", async () => {
     const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
     try {
       await rest.put(Routes.applicationCommands(bot.user.id), { body: commands });
-      console.log("✅ Slash commands registered");
+      console.log("✅ Commands registered");
     } catch (e) { console.error(e); }
+
+    // ✅ Link the game notifications to the real bot
+    discordInterface.send = async (channelId, text) => {
+      try {
+        const channel = await bot.channels.fetch(channelId);
+        if (channel) channel.send(text);
+      } catch (e) {}
+    };
   });
 
   bot.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === "start") {
-      // ✅ 1. Public Defer (Everyone can see this message)
-      await interaction.deferReply(); 
+      await interaction.deferReply();
+      const drawer = interaction.options.getUser("drawer");
+      const game = gameManager.createGame({
+        channelId: interaction.channelId,
+        drawerId: drawer ? drawer.id : null
+      });
 
-      try {
-        const drawer = interaction.options.getUser("drawer");
-        const game = gameManager.createGame({
-          channelId: interaction.channelId,
-          drawerId: drawer ? drawer.id : null
+      const embed = new EmbedBuilder()
+        .setTitle("🎨 Scribble Room Ready!")
+        .setDescription(`**Host:** ${interaction.user.username}\n**Drawer:** ${drawer ? drawer.username : "Random"}\n\n1️⃣ **[Click Here to Open Game](${gameManager.baseUrl}/?room=${game.id})**\n2️⃣ React with ✏️ to get your code.`)
+        .setColor(0x5865f2);
+
+      const message = await interaction.editReply({ embeds: [embed], fetchReply: true });
+      await message.react("✏️");
+
+      const collector = message.createReactionCollector({ filter: (r, u) => r.emoji.name === "✏️" && !u.bot, time: 600000 });
+      collector.on("collect", async (reaction, user) => {
+        const res = codeManager.issueCode(user.id, game.id, user.globalName || user.username);
+        if (!res.ok) return user.send(`❌ ${res.reason}`).catch(() => null);
+        user.send(`🎟 **Join Code:** \`${res.code}\``).catch(() => {
+          interaction.channel.send(`⚠️ <@${user.id}>, open your DMs for the code!`).then(m => setTimeout(() => m.delete(), 5000));
         });
+      });
+    }
 
-        const embed = new EmbedBuilder()
-          .setTitle("🎨 Scribble Room Ready!")
-          .setDescription(
-            `**Host:** ${interaction.user.username}\n` +
-            `**Drawer:** ${drawer ? drawer.username : "Random"}\n\n` +
-            `1️⃣ **[Click Here to Open Game](${gameManager.baseUrl}/?room=${game.id})**\n` +
-            `2️⃣ React with ✏️ to get your **Private Join Code** via DM.`
-          )
-          .setFooter({ text: "Codes expire in 3 minutes" })
-          .setColor(0x5865f2);
-
-        // ✅ 2. Send the public message and get the message object
-        const message = await interaction.editReply({
-          embeds: [embed],
-          fetchReply: true 
-        });
-
-        // ✅ 3. Add the reaction emoji
-        await message.react("✏️");
-
-        // ✅ 4. Create a collector for the ✏️ emoji
-        const collector = message.createReactionCollector({
-          filter: (r, u) => r.emoji.name === "✏️" && !u.bot,
-          time: 600000 // 10 minutes
-        });
-
-        collector.on("collect", async (reaction, user) => {
-          const displayName = user.globalName || user.username;
-          const res = codeManager.issueCode(user.id, game.id, displayName);
-
-          if (!res.ok) {
-            // If they are on cooldown, tell them privately
-            return user.send(`❌ **Error:** ${res.reason}`).catch(() => null);
-          }
-
-          // ✅ 5. Send the code PRIVATELY to the person who reacted
-          try {
-            await user.send(
-              `🎟 **Your Scribble Join Code:** \`${res.code}\`\n` +
-              `Enter this code on the website to join the room!`
-            );
-          } catch (err) {
-            // If their DMs are closed, mention them in the channel briefly
-            interaction.channel.send(`⚠️ <@${user.id}>, I couldn't DM you your code! Please open your DMs.`)
-              .then(m => setTimeout(() => m.delete(), 5000));
-          }
-        });
-
-      } catch (error) {
-        console.error(error);
-        await interaction.editReply({ content: "Error starting game." });
-      }
+    if (interaction.commandName === "leaderboard") {
+      const scores = gameManager.getScoresByChannel(interaction.channelId);
+      const embed = new EmbedBuilder()
+        .setTitle("🏆 Current Scores")
+        .setDescription(scores || "No active game in this channel.")
+        .setColor(0x57f287);
+      await interaction.reply({ embeds: [embed] });
     }
   });
 
