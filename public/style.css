@@ -1,22 +1,18 @@
 body {
     margin: 0;
-    overflow: hidden; /* Stops accidental scrolling */
     display: flex;
-    flex-direction: column;
     height: 100vh;
 }
 
-#canvas {
-    flex-grow: 1;
-    width: 100%;
+canvas {
+    flex: 3;
     background: white;
-    touch-action: none; /* Crucial for mobile drawing */
-    cursor: crosshair;
 }
 
-.controls {
-    padding: 10px;
-    background: #eee;
+.chat {
+    flex: 1;
+    background: #111;
+    color: white;
     display: flex;
-    gap: 5px;
+    flex-direction: column;
 }
