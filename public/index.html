@@ -1,63 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Scribble</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <title>Scribble Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   
-  <link rel="stylesheet" type="text/css" href="/style.css" />
+  <link rel="stylesheet" href="style.css">
   
   <script src="/socket.io/socket.io.js"></script>
 </head>
-
 <body>
 
 <div id="join-screen" class="screen">
-  <h1>🎨 Scribble</h1>
   <div class="card">
-    <input id="codeInput" placeholder="Enter join code" />
+    <h1>🎨 Scribble</h1>
+    <input id="codeInput" placeholder="Enter join code">
     <button id="joinBtn">Join Game</button>
-    <p class="hint">Get your code from Discord by reacting ✏️</p>
-    <p id="joinError" class="error"></p>
+    <p id="joinError" style="color: #ff4747;"></p>
   </div>
 </div>
 
 <div id="game-screen" class="screen hidden">
   <div class="top-bar">
-    <div id="wordHint">Waiting…</div>
-    <div id="timerBar"><div id="timerFill"></div></div>
+    <div id="wordHint" style="font-size: 24px; letter-spacing: 5px;">_ _ _ _</div>
+    <div id="timerBar" style="height: 5px; background: #444; margin-top: 5px;">
+      <div id="timerFill" style="height: 100%; background: #57f287; width: 100%;"></div>
+    </div>
   </div>
 
   <div class="main">
     <canvas id="canvas"></canvas>
     <div class="side-panel">
-      <h3>Players</h3>
       <ul id="players"></ul>
-      <div class="leaderboard">
-        <h4>Scores</h4>
-        <div id="scores"></div>
-      </div>
-      <button id="voteSkip">⏭ Vote Skip</button>
+      <div id="scores"></div>
+      <button id="voteSkip">Skip</button>
     </div>
   </div>
 
-  <div class="controls">
-    <input type="color" id="colorPicker" />
-    <button id="penBtn">✏️</button>
-    <button id="eraseBtn">🧽</button>
-    <button id="undoBtn">↩ Undo</button>
+  <div class="controls" style="background: #2b2d31; display: flex; justify-content: center; padding: 5px;">
+    <input type="color" id="colorPicker">
+    <button id="penBtn" style="width: auto; margin: 0 5px;">✏️</button>
+    <button id="eraseBtn" style="width: auto; margin: 0 5px;">🧽</button>
   </div>
 
   <div class="chat">
     <div id="messages"></div>
-    <input id="chatInput" placeholder="Type your guess…" />
-  </div>
-
-  <div id="roundOverlay" class="overlay hidden">
-    <div class="overlay-card"><h2 id="roundText"></h2></div>
+    <input id="chatInput" placeholder="Type guess here...">
   </div>
 </div>
 
-<script src="/app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
